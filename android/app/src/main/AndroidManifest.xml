@@ -1,12 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Gerekli İzinler -->
     <uses-permission android:name="android.permission.NFC" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    
+    <!-- NFC Donanım Özelliği -->
     <uses-feature android:name="android.hardware.nfc" android:required="true" />
 
     <application
         android:label="İşyeri Takip"
-        android:name="${applicationName}"
+        android:name="${applicationName}" 
         android:icon="@mipmap/ic_launcher">
+        
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -15,14 +19,19 @@
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
+            
+            <!-- Flutter Teması -->
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme" />
+                
+            <!-- Ana Başlatıcı -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- NFC intent filtresi (opsiyonel, kiosk uygulama içi polling kullanıyor) -->
+            
+            <!-- NFC Intent Filtresi (Kiosk uygulama içi polling kullanıyor) -->
             <intent-filter>
                 <action android:name="android.nfc.action.TECH_DISCOVERED"/>
             </intent-filter>
@@ -30,11 +39,14 @@
                 android:name="android.nfc.action.TECH_DISCOVERED"
                 android:resource="@xml/nfc_tech_filter" />
         </activity>
+        
+        <!-- Flutter v2 Embedding (Zorunlu) -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
 
+    <!-- Metin İşleme Sorgusu -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
