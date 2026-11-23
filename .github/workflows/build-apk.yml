@@ -1,0 +1,68 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Flutter APK Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: false
+
+      - name: Download Gradle Wrapper Jar
+        run: |
+          mkdir -p android/gradle/wrapper
+          curl -L -o android/gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v9.6.0/gradle/wrapper/gradle-wrapper.jar
+          chmod +x android/gradlew
+
+      - name: Flutter version
+        run: flutter --version
+
+      - name: Pub get
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        continue-on-error: true
+
+      - name: Build APK (release)
+        run: flutter build apk --release --verbose
+
+      - name: Rename APK
+        run: |
+          mkdir -p out
+          cp build/app/outputs/flutter-apk/app-release.apk out/isyeri-takip-${{ github.run_number }}.apk
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: isyeri-takip-apk-${{ github.run_number }}
+          path: out/isyeri-takip-*.apk
+          retention-days: 30
+
+      - name: Release (tag)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: out/isyeri-takip-*.apk
+          generate_release_notes: true
