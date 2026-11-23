@@ -23,7 +23,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.example.isyeri_takip"
-    compileSdk 34
+    compileSdk 37
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -40,7 +40,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.isyeri_takip"
-        minSdk 21
+        minSdk 24
         targetSdk 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
