@@ -41,7 +41,7 @@ android {
     defaultConfig {
         applicationId "com.example.isyeri_takip"
         minSdk 24
-        targetSdk 34
+        targetSdk 37
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }
