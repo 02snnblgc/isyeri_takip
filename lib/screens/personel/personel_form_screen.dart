@@ -58,7 +58,7 @@ class _PersonelFormScreenState extends State<PersonelFormScreen> {
     // Aynı UID başka personelde mi?
     final kullanimda = await context
         .read<PersonelProvider>()
-        .kartUidKullanimda(uid, hariçId: widget.personel?.id);
+        .kartUidKullanimda(uid, haricId: widget.personel?.id);
     if (!mounted) return;
     if (kullanimda) {
       messenger.showSnackBar(
