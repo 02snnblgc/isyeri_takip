@@ -1,4 +1,5 @@
 import 'package:nfc_manager/nfc_manager.dart';
+import 'package:flutter/foundation.dart';
 
 class NfcService {
   NfcService._();
@@ -65,29 +66,48 @@ class NfcService {
   /// UID çıkarır. En basit kartlar bile buradan geçer.
   String? _uidCikar(NfcTag tag) {
     List<int>? id;
+    
     try {
-      id = NfcAAndroid.from(tag)?.identifier;
-    } catch (_) {}
-    id ??= (() {
-      try { return MifareClassicAndroid.from(tag)?.identifier; } catch (_) { return null; }
-    })();
-    id ??= (() {
-      try { return MifareUltralightAndroid.from(tag)?.identifier; } catch (_) { return null; }
-    })();
-    id ??= (() {
-      try { return IsoDepAndroid.from(tag)?.identifier; } catch (_) { return null; }
-    })();
-    id ??= (() {
-      try { return NfcBAndroid.from(tag)?.identifier; } catch (_) { return null; }
-    })();
-    id ??= (() {
-      try { return NfcFAndroid.from(tag)?.identifier; } catch (_) { return null; }
-    })();
-    id ??= (() {
-      try { return NfcVAndroid.from(tag)?.identifier; } catch (_) { return null; }
-    })();
+      // 1. Deneme: NfcA (En yaygın olanı)
+      final nfcA = NfcAAndroid.from(tag);
+      id = nfcA?.identifier;
+    } catch (e) {
+      debugPrint('NfcA okuma hatası: $e');
+    }
+
+    if (id == null || id.isEmpty) {
+      try {
+        // 2. Deneme: MifareClassic (En basit kartlar)
+        final mifare = MifareClassicAndroid.from(tag);
+        id = mifare?.identifier;
+      } catch (e) {
+        debugPrint('MifareClassic okuma hatası: $e');
+      }
+    }
+
+    if (id == null || id.isEmpty) {
+      try {
+        // 3. Deneme: MifareUltralight
+        final ultra = MifareUltralightAndroid.from(tag);
+        id = ultra?.identifier;
+      } catch (e) {
+        debugPrint('MifareUltralight okuma hatası: $e');
+      }
+    }
+
+    if (id == null || id.isEmpty) {
+      try {
+        // 4. Deneme: IsoDep (Bazı kimlik kartları)
+        final isoDep = IsoDepAndroid.from(tag);
+        id = isoDep?.identifier;
+      } catch (e) {
+        debugPrint('IsoDep okuma hatası: $e');
+      }
+    }
 
     if (id == null || id.isEmpty) return null;
+    
+    // Gelen byte dizisini hex string'e çevir (örn: "a1b2c3d4")
     return id.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toLowerCase();
   }
 }
