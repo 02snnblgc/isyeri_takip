@@ -60,7 +60,6 @@ class NfcService {
     List<int>? id;
     
     try {
-      // nfc_manager v4+ için doğru sınıf ismi (Android uzantısı yok)
       final nfcA = NfcA.from(tag);
       id = nfcA?.identifier;
     } catch (e) {
