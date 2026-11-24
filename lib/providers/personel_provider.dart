@@ -90,7 +90,7 @@ class PersonelProvider extends ChangeNotifier {
   }
 
   /// UID'nin başka personelde olup olmadığını kontrol eder.
-  Future<bool> kartUidKullanimda(String uid, {int? hariçId}) {
-    return DbService.instance.kartUidKullanimdaMi(uid, hariçId: hariçId);
+  Future<bool> kartUidKullanimda(String uid, {int? haricId}) {
+    return DbService.instance.kartUidKullanimdaMi(uid, haricId: haricId);
   }
 }
