@@ -59,38 +59,32 @@ class NfcService {
   String? _uidCikar(NfcTag tag) {
     List<int>? id;
     
+    // nfc_manager paketinin farklı sürümlerindeki sınıf isimlerini 
+    // dinamik olarak kontrol ederek UID çıkarıyoruz.
     try {
-      final nfcA = NfcA.from(tag);
+      final dynamic nfcA = NfcAAndroid.from(tag);
       id = nfcA?.identifier;
-    } catch (e) {
-      debugPrint('NfcA okuma hatası: $e');
-    }
+    } catch (_) {}
 
     if (id == null || id.isEmpty) {
       try {
-        final mifare = MifareClassic.from(tag);
+        final dynamic mifare = MifareClassicAndroid.from(tag);
         id = mifare?.identifier;
-      } catch (e) {
-        debugPrint('MifareClassic okuma hatası: $e');
-      }
+      } catch (_) {}
     }
 
     if (id == null || id.isEmpty) {
       try {
-        final ultra = MifareUltralight.from(tag);
+        final dynamic ultra = MifareUltralightAndroid.from(tag);
         id = ultra?.identifier;
-      } catch (e) {
-        debugPrint('MifareUltralight okuma hatası: $e');
-      }
+      } catch (_) {}
     }
 
     if (id == null || id.isEmpty) {
       try {
-        final isoDep = IsoDep.from(tag);
+        final dynamic isoDep = IsoDepAndroid.from(tag);
         id = isoDep?.identifier;
-      } catch (e) {
-        debugPrint('IsoDep okuma hatası: $e');
-      }
+      } catch (_) {}
     }
 
     if (id == null || id.isEmpty) return null;
