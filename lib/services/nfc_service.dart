@@ -1,4 +1,5 @@
 import 'package:nfc_manager/nfc_manager.dart';
+import 'package:nfc_manager_android/nfc_manager_android.dart'; // Android sınıfları için gerekli
 import 'package:flutter/foundation.dart';
 
 class NfcService {
@@ -59,32 +60,40 @@ class NfcService {
   String? _uidCikar(NfcTag tag) {
     List<int>? id;
     
-    // nfc_manager paketinin farklı sürümlerindeki sınıf isimlerini 
-    // dinamik olarak kontrol ederek UID çıkarıyoruz.
+    // nfc_manager 4.x sürümünde Android sınıfları 'Android' uzantılıdır.
+    // Bu sınıflar nfc_manager_android paketinden gelir.
     try {
-      final dynamic nfcA = NfcAAndroid.from(tag);
+      final NfcAAndroid? nfcA = NfcAAndroid.from(tag);
       id = nfcA?.identifier;
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('NfcAAndroid okuma hatası: $e');
+    }
 
     if (id == null || id.isEmpty) {
       try {
-        final dynamic mifare = MifareClassicAndroid.from(tag);
+        final MifareClassicAndroid? mifare = MifareClassicAndroid.from(tag);
         id = mifare?.identifier;
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('MifareClassicAndroid okuma hatası: $e');
+      }
     }
 
     if (id == null || id.isEmpty) {
       try {
-        final dynamic ultra = MifareUltralightAndroid.from(tag);
+        final MifareUltralightAndroid? ultra = MifareUltralightAndroid.from(tag);
         id = ultra?.identifier;
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('MifareUltralightAndroid okuma hatası: $e');
+      }
     }
 
     if (id == null || id.isEmpty) {
       try {
-        final dynamic isoDep = IsoDepAndroid.from(tag);
+        final IsoDepAndroid? isoDep = IsoDepAndroid.from(tag);
         id = isoDep?.identifier;
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('IsoDepAndroid okuma hatası: $e');
+      }
     }
 
     if (id == null || id.isEmpty) return null;
