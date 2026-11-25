@@ -57,45 +57,19 @@ class NfcService {
   }
 
   String? _uidCikar(NfcTag tag) {
-    List<int>? id;
-    
-    // nfc_manager 4.x sürümünde sınıf isimleri 'Android' uzantısızdır.
     try {
-      final NfcA? nfcA = NfcA.from(tag);
-      id = nfcA?.identifier;
+      // nfc_manager 4.x'te Ndef sınıfı ana pakette mevcuttur.
+      // Ndef verisinden identifier'a ulaşarak UID'yi çıkarıyoruz.
+      final ndef = Ndef.from(tag);
+      if (ndef != null && ndef.additionalData != null) {
+        final id = ndef.additionalData!['identifier'];
+        if (id != null && id is List<int> && id.isNotEmpty) {
+          return id.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toLowerCase();
+        }
+      }
     } catch (e) {
-      debugPrint('NfcA okuma hatası: $e');
+      debugPrint('UID okuma hatası: $e');
     }
-
-    if (id == null || id.isEmpty) {
-      try {
-        final MifareClassic? mifare = MifareClassic.from(tag);
-        id = mifare?.identifier;
-      } catch (e) {
-        debugPrint('MifareClassic okuma hatası: $e');
-      }
-    }
-
-    if (id == null || id.isEmpty) {
-      try {
-        final MifareUltralight? ultra = MifareUltralight.from(tag);
-        id = ultra?.identifier;
-      } catch (e) {
-        debugPrint('MifareUltralight okuma hatası: $e');
-      }
-    }
-
-    if (id == null || id.isEmpty) {
-      try {
-        final IsoDep? isoDep = IsoDep.from(tag);
-        id = isoDep?.identifier;
-      } catch (e) {
-        debugPrint('IsoDep okuma hatası: $e');
-      }
-    }
-
-    if (id == null || id.isEmpty) return null;
-    
-    return id.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toLowerCase();
+    return null;
   }
 }
