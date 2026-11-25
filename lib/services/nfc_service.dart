@@ -1,5 +1,4 @@
 import 'package:nfc_manager/nfc_manager.dart';
-import 'package:nfc_manager_android/nfc_manager_android.dart'; // Android sınıfları için gerekli
 import 'package:flutter/foundation.dart';
 
 class NfcService {
@@ -58,46 +57,25 @@ class NfcService {
   }
 
   String? _uidCikar(NfcTag tag) {
-    List<int>? id;
-    
-    // nfc_manager 4.x sürümünde Android sınıfları 'Android' uzantılıdır.
-    // Bu sınıflar nfc_manager_android paketinden gelir.
     try {
-      final NfcAAndroid? nfcA = NfcAAndroid.from(tag);
-      id = nfcA?.identifier;
+      // NFC etiketinin ham veri haritasını alıyoruz.
+      dynamic data = tag.data;
+      if (data != null && data is Map) {
+        // Farklı NFC türleri (nfcA, isoDep, mifareClassic vb.) kendi 
+        // verilerini farklı anahtarlar altında tutar. Hepsini tarıyoruz.
+        for (var key in data.keys) {
+          var innerData = data[key];
+          if (innerData is Map && innerData.containsKey('identifier')) {
+            List<int>? uid = innerData['identifier'];
+            if (uid != null && uid.isNotEmpty) {
+              return uid.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toLowerCase();
+            }
+          }
+        }
+      }
     } catch (e) {
-      debugPrint('NfcAAndroid okuma hatası: $e');
+      debugPrint('UID okuma hatası: $e');
     }
-
-    if (id == null || id.isEmpty) {
-      try {
-        final MifareClassicAndroid? mifare = MifareClassicAndroid.from(tag);
-        id = mifare?.identifier;
-      } catch (e) {
-        debugPrint('MifareClassicAndroid okuma hatası: $e');
-      }
-    }
-
-    if (id == null || id.isEmpty) {
-      try {
-        final MifareUltralightAndroid? ultra = MifareUltralightAndroid.from(tag);
-        id = ultra?.identifier;
-      } catch (e) {
-        debugPrint('MifareUltralightAndroid okuma hatası: $e');
-      }
-    }
-
-    if (id == null || id.isEmpty) {
-      try {
-        final IsoDepAndroid? isoDep = IsoDepAndroid.from(tag);
-        id = isoDep?.identifier;
-      } catch (e) {
-        debugPrint('IsoDepAndroid okuma hatası: $e');
-      }
-    }
-
-    if (id == null || id.isEmpty) return null;
-    
-    return id.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toLowerCase();
+    return null;
   }
 }
