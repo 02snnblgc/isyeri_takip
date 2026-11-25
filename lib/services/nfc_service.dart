@@ -16,12 +16,6 @@ class NfcService {
 
     await NfcManager.instance.startSession(
       pollingOptions: const {NfcPollingOption.iso14443},
-      options: const NfcSessionOptions(
-        android: AndroidNfcSessionOptions(
-          enableReaderMode: true,
-          foregroundMode: true,
-        ),
-      ),
       onDiscovered: (NfcTag tag) async {
         uid = _uidCikar(tag);
         await NfcManager.instance.stopSession();
@@ -47,12 +41,6 @@ class NfcService {
     _kioskAktif = true;
     await NfcManager.instance.startSession(
       pollingOptions: const {NfcPollingOption.iso14443},
-      options: const NfcSessionOptions(
-        android: AndroidNfcSessionOptions(
-          enableReaderMode: true,
-          foregroundMode: true,
-        ),
-      ),
       onDiscovered: (NfcTag tag) async {
         final uid = _uidCikar(tag);
         if (uid != null && uid.isNotEmpty) onUid(uid);
@@ -68,28 +56,46 @@ class NfcService {
     } catch (_) {}
   }
 
-  /// NFC etiketinin ham verisinden doğrudan UID (Kimlik) çıkarır.
-  /// Bu yöntem, kütüphanedeki sınıf isimlerinden bağımsızdır.
   String? _uidCikar(NfcTag tag) {
+    List<int>? id;
+    
+    // nfc_manager 4.x sürümünde sınıf isimleri 'Android' uzantılıdır.
     try {
-      // Etiketin ham veri haritasını alıyoruz.
-      dynamic data = tag.data;
-      if (data != null && data is Map) {
-        // Farklı NFC türleri (nfcA, isoDep, mifareClassic vb.) kendi 
-        // verilerini farklı anahtarlar altında tutar. Hepsini tarıyoruz.
-        for (var key in data.keys) {
-          var innerData = data[key];
-          if (innerData is Map && innerData.containsKey('identifier')) {
-            List<int>? uid = innerData['identifier'];
-            if (uid != null && uid.isNotEmpty) {
-              return uid.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toLowerCase();
-            }
-          }
-        }
-      }
+      final NfcAAndroid? nfcA = NfcAAndroid.from(tag);
+      id = nfcA?.identifier;
     } catch (e) {
-      debugPrint('UID okuma hatası: $e');
+      debugPrint('NfcAAndroid okuma hatası: $e');
     }
-    return null;
+
+    if (id == null || id.isEmpty) {
+      try {
+        final MifareClassicAndroid? mifare = MifareClassicAndroid.from(tag);
+        id = mifare?.identifier;
+      } catch (e) {
+        debugPrint('MifareClassicAndroid okuma hatası: $e');
+      }
+    }
+
+    if (id == null || id.isEmpty) {
+      try {
+        final MifareUltralightAndroid? ultra = MifareUltralightAndroid.from(tag);
+        id = ultra?.identifier;
+      } catch (e) {
+        debugPrint('MifareUltralightAndroid okuma hatası: $e');
+      }
+    }
+
+    if (id == null || id.isEmpty) {
+      try {
+        final IsoDepAndroid? isoDep = IsoDepAndroid.from(tag);
+        id = isoDep?.identifier;
+      } catch (e) {
+        debugPrint('IsoDepAndroid okuma hatası: $e');
+      }
+    }
+
+    if (id == null || id.isEmpty) return null;
+    
+    return id.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toLowerCase();
   }
 }
