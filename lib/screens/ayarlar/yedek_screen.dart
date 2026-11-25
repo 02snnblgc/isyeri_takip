@@ -56,6 +56,7 @@ class _YedekScreenState extends State<YedekScreen> {
     );
     if (onay != true) return;
 
+    // Yeni API: FilePicker.platform yerine doğrudan FilePicker.pickFiles kullanılıyor.
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
