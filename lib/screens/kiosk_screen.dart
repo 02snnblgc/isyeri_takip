@@ -176,21 +176,70 @@ class _KioskScreenState extends State<KioskScreen> {
   }
 
   Future<void> _cikisOnay() async {
+    final parolaCtrl = TextEditingController();
+    bool hatali = false;
+
     final ok = await showDialog<bool>(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Kiosk\'tan çıkılsın mı?'),
-        content: const Text('Personelin kiosk modundan çıkmasını istemiyorsanız vazgeçin.'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Vazgeç')),
-          FilledButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Çık')),
-        ],
+      barrierDismissible: false, // Dışarı tıklayınca kapanmasın
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setStateDialog) => AlertDialog(
+          title: const Text('Yönetici Girişi'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Kiosk modundan çıkmak için yönetici parolasını girin.'),
+              const SizedBox(height: 12),
+              TextField(
+                controller: parolaCtrl,
+                obscureText: true,
+                autofocus: true,
+                decoration: InputDecoration(
+                  labelText: 'Parola',
+                  border: const OutlineInputBorder(),
+                  errorText: hatali ? 'Hatalı parola!' : null,
+                ),
+                onSubmitted: (_) async {
+                  // Enter'a basınca kontrol et
+                  final auth = context.read<AuthProvider>();
+                  final kullanici = auth.kullanici;
+                  if (kullanici != null) {
+                    final dogruMu = await DbService.instance.girisDogrula(kullanici.kullaniciAdi, parolaCtrl.text);
+                    if (dogruMu) {
+                      Navigator.pop(ctx, true);
+                    } else {
+                      setStateDialog(() => hatali = true);
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('İptal'),
+            ),
+            FilledButton(
+              onPressed: () async {
+                final auth = context.read<AuthProvider>();
+                final kullanici = auth.kullanici;
+                if (kullanici != null) {
+                  final dogruMu = await DbService.instance.girisDogrula(kullanici.kullaniciAdi, parolaCtrl.text);
+                  if (dogruMu) {
+                    Navigator.pop(ctx, true);
+                  } else {
+                    setStateDialog(() => hatali = true);
+                  }
+                }
+              },
+              child: const Text('Çıkış Yap'),
+            ),
+          ],
+        ),
       ),
     );
+    
+    parolaCtrl.dispose();
     if (ok == true && mounted) Navigator.pop(context);
   }
-}
