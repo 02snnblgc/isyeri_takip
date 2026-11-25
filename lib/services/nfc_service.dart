@@ -1,4 +1,5 @@
 import 'package:nfc_manager/nfc_manager.dart';
+import 'package:nfc_manager_android/nfc_manager_android.dart'; // Android sınıfları için ZORUNLU import
 import 'package:flutter/foundation.dart';
 
 class NfcService {
@@ -59,7 +60,7 @@ class NfcService {
   String? _uidCikar(NfcTag tag) {
     List<int>? id;
     
-    // nfc_manager 4.x sürümünde sınıf isimleri 'Android' uzantılıdır.
+    // nfc_manager_android paketindeki sınıfları kullanıyoruz.
     try {
       final NfcAAndroid? nfcA = NfcAAndroid.from(tag);
       id = nfcA?.identifier;
