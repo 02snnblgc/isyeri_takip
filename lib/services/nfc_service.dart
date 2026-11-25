@@ -57,37 +57,44 @@ class NfcService {
   }
 
   String? _uidCikar(NfcTag tag) {
-    List<int>? id;
-
-    // 3.4.0 sürümünde sınıflar doğrudan bu isimlerle ana pakette yer alır.
     try {
-      final NfcA? nfcA = NfcA.from(tag);
-      id = nfcA?.identifier;
-    } catch (_) {}
+      // 4.x sürümünde tag.data bir TagPigeon nesnesidir.
+      // İçindeki 'ndef' verisinden identifier'a erişmeye çalışıyoruz.
+      dynamic data = tag.data;
+      
+      // Eğer data içinde 'ndef' varsa (NDEF formatlı kartlar)
+      if (data != null && data is Map && data.containsKey('ndef')) {
+        dynamic ndef = data['ndef'];
+        if (ndef != null) {
+          // Ndef içindeki cachedNdefMessage üzerinden identifier'a ulaşmayı dene
+          if (ndef is Map && ndef.containsKey('additionalData')) {
+            dynamic addData = ndef['additionalData'];
+            if (addData != null && addData is Map && addData.containsKey('identifier')) {
+              List<int>? id = addData['identifier'];
+              if (id != null && id.isNotEmpty) {
+                return id.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toLowerCase();
+              }
+            }
+          }
+        }
+      }
 
-    if (id == null || id.isEmpty) {
-      try {
-        final MifareClassic? mifare = MifareClassic.from(tag);
-        id = mifare?.identifier;
-      } catch (_) {}
+      // Alternatif olarak, doğrudan 'identifier' anahtarını ara (bazı kart tipleri için)
+      if (data != null && data is Map) {
+        for (var key in data.keys) {
+          var innerData = data[key];
+          if (innerData is Map && innerData.containsKey('identifier')) {
+            List<int>? id = innerData['identifier'];
+            if (id != null && id.isNotEmpty) {
+              return id.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toLowerCase();
+            }
+          }
+        }
+      }
+      
+    } catch (e) {
+      debugPrint('UID okuma hatası: $e');
     }
-
-    if (id == null || id.isEmpty) {
-      try {
-        final MifareUltralight? ultra = MifareUltralight.from(tag);
-        id = ultra?.identifier;
-      } catch (_) {}
-    }
-
-    if (id == null || id.isEmpty) {
-      try {
-        final IsoDep? isoDep = IsoDep.from(tag);
-        id = isoDep?.identifier;
-      } catch (_) {}
-    }
-
-    if (id == null || id.isEmpty) return null;
-    
-    return id.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toLowerCase();
+    return null;
   }
 }
