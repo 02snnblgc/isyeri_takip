@@ -19,7 +19,6 @@ dependencies:
   crypto: ^3.0.0
   intl: ^0.20.3
   nfc_manager: ^4.4.0
-  nfc_manager_android: ^1.0.0   # YENİ EKLENEN SATIR
   wakelock_plus: ^1.2.8
   audioplayers: ^6.1.0
   pdf: ^3.11.1
