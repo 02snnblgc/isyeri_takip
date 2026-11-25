@@ -56,22 +56,25 @@ class _YedekScreenState extends State<YedekScreen> {
     );
     if (onay != true) return;
 
-    // Yeni API: FilePicker.platform yerine doğrudan FilePicker.pickFiles kullanılıyor.
+    // Yeni API: FilePicker.pickFiles doğrudan List<PlatformFile> döndürür.
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
     );
     
-    // pickFiles artık List<PlatformFile> döndürüyor, null kontrolü ve ilk elemanı alıyoruz.
     if (result == null || result.isEmpty || result.first.path == null) return;
-    
-    final metin = await File(result.first.path!).readAsString();
+
+    setState(() => _islemde = true);
+    try {
+      final metin = await File(result.first.path!).readAsString();
       // JSON doğrulama
       jsonDecode(metin);
       final sayi = await YedekService.instance.yedekYukle(metin);
+      
       final kullaniciId = context.read<AuthProvider>().kullanici?.id;
       await DbService.instance.auditYaz(
           kullaniciId, 'yedek_yukle', '$sayi tablo yüklendi');
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Yedek yüklendi ($sayi tablo).'),
