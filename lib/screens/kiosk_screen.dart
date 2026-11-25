@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../providers/kiosk_provider.dart';
+import '../providers/auth_provider.dart'; // Eklendi (Parola kontrolü için)
+import '../services/db_service.dart';      // Eklendi (Parola doğrulama için)
 import '../services/nfc_service.dart';
 import '../widgets/ozet_panel_widget.dart';
 import '../widgets/saat_widget.dart';
@@ -200,7 +202,6 @@ class _KioskScreenState extends State<KioskScreen> {
                   errorText: hatali ? 'Hatalı parola!' : null,
                 ),
                 onSubmitted: (_) async {
-                  // Enter'a basınca kontrol et
                   final auth = context.read<AuthProvider>();
                   final kullanici = auth.kullanici;
                   if (kullanici != null) {
@@ -243,3 +244,4 @@ class _KioskScreenState extends State<KioskScreen> {
     parolaCtrl.dispose();
     if (ok == true && mounted) Navigator.pop(context);
   }
+}
