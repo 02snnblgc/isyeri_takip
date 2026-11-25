@@ -56,15 +56,15 @@ class _YedekScreenState extends State<YedekScreen> {
     );
     if (onay != true) return;
 
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['json'],
     );
-    if (result == null || result.files.single.path == null) return;
-
-    setState(() => _islemde = true);
-    try {
-      final metin = await File(result.files.single.path!).readAsString();
+    
+    // pickFiles artık List<PlatformFile> döndürüyor, null kontrolü ve ilk elemanı alıyoruz.
+    if (result == null || result.isEmpty || result.first.path == null) return;
+    
+    final metin = await File(result.first.path!).readAsString();
       // JSON doğrulama
       jsonDecode(metin);
       final sayi = await YedekService.instance.yedekYukle(metin);
