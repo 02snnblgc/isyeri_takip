@@ -23,7 +23,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "com.example.isyeri_takip"
-    compileSdk 37
+    compileSdk 37 // En az 36 olmalı, 37 en güvenli seçenek
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
