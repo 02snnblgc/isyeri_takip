@@ -174,8 +174,10 @@ class _KioskScreenState extends State<KioskScreen> {
   }
 
   Future<void> _cikisOnay() async {
+    final kadiCtrl = TextEditingController(text: 'admin'); // Varsayılan olarak admin yazılı gelsin
     final parolaCtrl = TextEditingController();
     bool hatali = false;
+    String hataMesaji = '';
 
     final ok = await showDialog<bool>(
       context: context,
@@ -186,8 +188,16 @@ class _KioskScreenState extends State<KioskScreen> {
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Yönetici paneline geçmek için parolanızı girin.'),
+              const Text('Yönetici paneline geçmek için bilgilerinizi girin.'),
               const SizedBox(height: 12),
+              TextField(
+                controller: kadiCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Kullanıcı Adı',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 8),
               TextField(
                 controller: parolaCtrl,
                 obscureText: true,
@@ -195,20 +205,8 @@ class _KioskScreenState extends State<KioskScreen> {
                 decoration: InputDecoration(
                   labelText: 'Parola',
                   border: const OutlineInputBorder(),
-                  errorText: hatali ? 'Hatalı parola!' : null,
+                  errorText: hatali ? hataMesaji : null,
                 ),
-                onSubmitted: (_) async {
-                  final auth = context.read<AuthProvider>();
-                  final kullanici = auth.kullanici;
-                  if (kullanici != null) {
-                    final dogruMu = await DbService.instance.girisDogrula(kullanici.kullaniciAdi, parolaCtrl.text);
-                    if (dogruMu) {
-                      Navigator.pop(ctx, true);
-                    } else {
-                      setStateDialog(() => hatali = true);
-                    }
-                  }
-                },
               ),
             ],
           ),
@@ -220,14 +218,15 @@ class _KioskScreenState extends State<KioskScreen> {
             FilledButton(
               onPressed: () async {
                 final auth = context.read<AuthProvider>();
-                final kullanici = auth.kullanici;
-                if (kullanici != null) {
-                  final dogruMu = await DbService.instance.girisDogrula(kullanici.kullaniciAdi, parolaCtrl.text);
-                  if (dogruMu) {
-                    Navigator.pop(ctx, true);
-                  } else {
-                    setStateDialog(() => hatali = true);
-                  }
+                // Kullanıcı adı ve parolayı doğrudan AuthProvider'a gönderiyoruz.
+                final basarili = await auth.giris(kadiCtrl.text.trim(), parolaCtrl.text);
+                if (basarili) {
+                  Navigator.pop(ctx, true);
+                } else {
+                  setStateDialog(() {
+                    hatali = true;
+                    hataMesaji = auth.hata ?? 'Hatalı giriş';
+                  });
                 }
               },
               child: const Text('Giriş Yap'),
@@ -237,8 +236,11 @@ class _KioskScreenState extends State<KioskScreen> {
       ),
     );
     
+    kadiCtrl.dispose();
     parolaCtrl.dispose();
+    
     if (ok == true && mounted) {
+      // Başarılı girişte Yönetici Paneline (AnaScreen) geç
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const AnaScreen()),
