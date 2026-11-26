@@ -18,9 +18,9 @@ class NfcService {
       pollingOptions: const {NfcPollingOption.iso14443},
       onDiscovered: (NfcTag tag) async {
         uid = _uidCikar(tag);
-        // KRİTİK: Kart okunduktan sonra oturumu hemen kapatmıyoruz.
-        // Android'in kartı algılamaya devam etmesini engellemek için
-        // kısa bir süre bekleyip öyle kapatıyoruz.
+        
+        // KRİTİK: Kart okunduktan sonra uygulamanın kapanmasını engellemek için
+        // 2 saniye bekleyip oturumu öyle kapatıyoruz.
         await Future.delayed(const Duration(seconds: 2));
         await NfcManager.instance.stopSession();
       },
@@ -62,16 +62,20 @@ class NfcService {
 
   String? _uidCikar(NfcTag tag) {
     try {
+      // nfc_manager 4.x sürümünde tag.data bir nesne döndürür.
+      // İçindeki farklı NFC türlerinin 'identifier' değerlerini dinamik olarak arıyoruz.
       dynamic data = tag.data;
-      if (data != null && data is Map) {
-        for (var key in data.keys) {
-          var innerData = data[key];
-          if (innerData is Map && innerData.containsKey('identifier')) {
-            List<int>? uid = innerData['identifier'];
-            if (uid != null && uid.isNotEmpty) {
-              return uid.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toLowerCase();
-            }
-          }
+      if (data != null) {
+        dynamic id;
+        
+        try { id = data.nfcA?.identifier; } catch (_) {}
+        if (id == null) { try { id = data.mifareClassic?.identifier; } catch (_) {} }
+        if (id == null) { try { id = data.mifareUltralight?.identifier; } catch (_) {} }
+        if (id == null) { try { id = data.isoDep?.identifier; } catch (_) {} }
+        if (id == null) { try { id = data.ndef?.additionalData?['identifier']; } catch (_) {} }
+
+        if (id != null && id is List<int> && id.isNotEmpty) {
+          return id.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toLowerCase();
         }
       }
     } catch (e) {
