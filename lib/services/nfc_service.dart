@@ -18,6 +18,10 @@ class NfcService {
       pollingOptions: const {NfcPollingOption.iso14443},
       onDiscovered: (NfcTag tag) async {
         uid = _uidCikar(tag);
+        // KRİTİK: Kart okunduktan sonra oturumu hemen kapatmıyoruz.
+        // Android'in kartı algılamaya devam etmesini engellemek için
+        // kısa bir süre bekleyip öyle kapatıyoruz.
+        await Future.delayed(const Duration(seconds: 2));
         await NfcManager.instance.stopSession();
       },
     );
@@ -58,40 +62,18 @@ class NfcService {
 
   String? _uidCikar(NfcTag tag) {
     try {
-      // 4.x sürümünde tag.data bir TagPigeon nesnesidir.
-      // İçindeki 'ndef' verisinden identifier'a erişmeye çalışıyoruz.
       dynamic data = tag.data;
-      
-      // Eğer data içinde 'ndef' varsa (NDEF formatlı kartlar)
-      if (data != null && data is Map && data.containsKey('ndef')) {
-        dynamic ndef = data['ndef'];
-        if (ndef != null) {
-          // Ndef içindeki cachedNdefMessage üzerinden identifier'a ulaşmayı dene
-          if (ndef is Map && ndef.containsKey('additionalData')) {
-            dynamic addData = ndef['additionalData'];
-            if (addData != null && addData is Map && addData.containsKey('identifier')) {
-              List<int>? id = addData['identifier'];
-              if (id != null && id.isNotEmpty) {
-                return id.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toLowerCase();
-              }
-            }
-          }
-        }
-      }
-
-      // Alternatif olarak, doğrudan 'identifier' anahtarını ara (bazı kart tipleri için)
       if (data != null && data is Map) {
         for (var key in data.keys) {
           var innerData = data[key];
           if (innerData is Map && innerData.containsKey('identifier')) {
-            List<int>? id = innerData['identifier'];
-            if (id != null && id.isNotEmpty) {
-              return id.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toLowerCase();
+            List<int>? uid = innerData['identifier'];
+            if (uid != null && uid.isNotEmpty) {
+              return uid.map((b) => b.toRadixString(16).padLeft(2, '0')).join().toLowerCase();
             }
           }
         }
       }
-      
     } catch (e) {
       debugPrint('UID okuma hatası: $e');
     }
