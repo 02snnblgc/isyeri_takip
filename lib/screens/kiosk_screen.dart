@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../providers/kiosk_provider.dart';
-import '../providers/auth_provider.dart'; // Eklendi (Parola kontrolü için)
-import '../services/db_service.dart';      // Eklendi (Parola doğrulama için)
+import '../providers/auth_provider.dart';
+import '../services/db_service.dart';
 import '../services/nfc_service.dart';
 import '../widgets/ozet_panel_widget.dart';
 import '../widgets/saat_widget.dart';
+import 'ana_screen.dart'; // Yönetici paneline geçiş için gerekli
 
 class KioskScreen extends StatefulWidget {
   const KioskScreen({super.key});
@@ -23,7 +24,6 @@ class _KioskScreenState extends State<KioskScreen> {
       final kp = context.read<KioskProvider>();
       await kp.ozetYenileDisaridan();
       await NfcService.instance.baslatKiosk((uid) {
-        // Aynı anda birden fazla okutma gelebilir; sırayla işle.
         kp.kartOkundu(uid);
       });
     });
@@ -54,27 +54,25 @@ class _KioskScreenState extends State<KioskScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // ALT KATMAN: normal kiosk
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // Üst: Saat + çıkış
                   Row(
                     children: [
                       const Expanded(
                         child: SaatWidget(buyuk: true, renk: Colors.white),
                       ),
+                      // YÖNETİCİ GİRİŞ BUTONU
                       IconButton.filledTonal(
-                        tooltip: 'Kiosk\'tan çık',
+                        tooltip: 'Yönetici Girişi',
                         onPressed: _cikisOnay,
-                        icon: const Icon(Icons.close),
+                        icon: const Icon(Icons.admin_panel_settings),
                       ),
                     ],
                   ),
                   const SizedBox(height: 18),
-                  // Özet paneli
                   OzetPanelWidget(
                     icerideki: kp.iceridekiSayisi,
                     gelmeyen: kp.gelmeyenSayisi,
@@ -82,7 +80,6 @@ class _KioskScreenState extends State<KioskScreen> {
                     onRenk: Colors.white,
                   ),
                   const Spacer(),
-                  // Ortada büyük NFC ikonu ve talimat
                   Container(
                     width: 180, height: 180,
                     decoration: BoxDecoration(
@@ -117,7 +114,6 @@ class _KioskScreenState extends State<KioskScreen> {
             ),
           ),
 
-          // ÜST KATMAN: tam ekran renk overlay
           if (overlayAktif)
             Positioned.fill(
               child: IgnorePointer(
@@ -183,14 +179,14 @@ class _KioskScreenState extends State<KioskScreen> {
 
     final ok = await showDialog<bool>(
       context: context,
-      barrierDismissible: false, // Dışarı tıklayınca kapanmasın
+      barrierDismissible: false,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setStateDialog) => AlertDialog(
           title: const Text('Yönetici Girişi'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Kiosk modundan çıkmak için yönetici parolasını girin.'),
+              const Text('Yönetici paneline geçmek için parolanızı girin.'),
               const SizedBox(height: 12),
               TextField(
                 controller: parolaCtrl,
@@ -234,7 +230,7 @@ class _KioskScreenState extends State<KioskScreen> {
                   }
                 }
               },
-              child: const Text('Çıkış Yap'),
+              child: const Text('Giriş Yap'),
             ),
           ],
         ),
@@ -242,6 +238,11 @@ class _KioskScreenState extends State<KioskScreen> {
     );
     
     parolaCtrl.dispose();
-    if (ok == true && mounted) Navigator.pop(context);
+    if (ok == true && mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const AnaScreen()),
+      );
+    }
   }
 }
